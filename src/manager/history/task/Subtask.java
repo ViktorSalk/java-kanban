@@ -1,3 +1,5 @@
+package manager.history.task;
+
 class Subtask extends Task {
     private int epicId;
 
@@ -12,7 +14,7 @@ class Subtask extends Task {
 
     @Override
     public String toString() {
-        return "Subtask {" +
+        return "manager.history.task.Subtask {" +
                 "id= " + getId() +
                 ", name= '" + getName() + '\'' +
                 ", description= " + getDescription() +

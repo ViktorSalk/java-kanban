@@ -1,3 +1,5 @@
+package manager.history.task;
+
 import java.util.ArrayList;
 import java.util.List;
 class Epic extends Task {
@@ -30,7 +32,7 @@ class Epic extends Task {
 
     @Override
     public String toString() {
-        return "Epic {" +
+        return "manager.history.task.Epic {" +
                 "id= " + getId() +
                 ", name= '" + getName() + '\'' +
                 ", description= " + getDescription() +

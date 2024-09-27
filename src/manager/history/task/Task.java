@@ -1,3 +1,5 @@
+package manager.history.task;
+
 class Task {
     private int id;
     private String name;
@@ -44,7 +46,7 @@ class Task {
 
     @Override
     public String toString() {
-        return "Task {" +
+        return "manager.history.task.Task {" +
                 "id= " + id +
                 ", name= '" + name + '\'' +
                 ", description= " + description +
