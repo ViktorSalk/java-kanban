@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 class TaskManager {
-    private static int nextTaskId = 1;
+    private int nextTaskId = 1;
     private HashMap<Integer, Task> tasks = new HashMap<>();
     private HashMap<Integer, Epic> epics = new HashMap<>();
     private HashMap<Integer, Subtask> subtasks = new HashMap<>();
@@ -49,6 +49,10 @@ class TaskManager {
     }
 
     public void deleteEpic(int id) {
+        // Удаление подзадач, связанных с эпиком
+        for (Subtask subtask : epics.get(id).getSubtasks()) {
+            deleteSubtask(subtask.getId());
+        }
         epics.remove(id);
     }
 
@@ -68,6 +72,7 @@ class TaskManager {
         }
 
         epics.get(subtask.getEpicId()).addSubtask(subtask);
+        updateEpicStatus(subtask.getEpicId());
         return subtask;
     }
 
@@ -77,13 +82,14 @@ class TaskManager {
 
     public void updateSubtask(Subtask subtask) {
         subtasks.put(subtask.getId(), subtask);
-        epics.get(subtask.getEpicId()).updateSubtask(subtask);
+        updateEpicStatus(subtask.getEpicId());
     }
 
     public void deleteSubtask(int id) {
         Subtask subtask = subtasks.get(id);
         epics.get(subtask.getEpicId()).removeSubtask(id);
         subtasks.remove(id);
+        updateEpicStatus(subtask.getEpicId());
     }
 
     public List<Subtask> getAllSubtasks() {
@@ -96,14 +102,35 @@ class TaskManager {
     }
 
     // Методы для обновления статуса эпика
-    public void updateEpicStatus(int epicId) {
+    private void updateEpicStatus(int epicId) {
         Epic epic = epics.get(epicId);
-        if (epic.getSubtasks().isEmpty()) {
+        if (epic.getSubtasks().stream().allMatch(subtask -> subtask.getStatus() == TaskStatus.NEW)) {
             epic.setStatus(TaskStatus.NEW);
         } else if (epic.getSubtasks().stream().allMatch(subtask -> subtask.getStatus() == TaskStatus.DONE)) {
             epic.setStatus(TaskStatus.DONE);
         } else {
             epic.setStatus(TaskStatus.IN_PROGRESS);
         }
+    }
+
+    // Методы для удаления всех задач по типам
+    public void clearTasks() {
+        tasks.clear();
+    }
+
+    public void clearEpics() {
+        for (Epic epic : epics.values()) {
+            for (Subtask subtask : epic.getSubtasks()) {
+                deleteSubtask(subtask.getId());
+            }
+        }
+        epics.clear();
+    }
+
+    public void clearSubtasks() {
+        for (Subtask subtask : subtasks.values()) {
+            epics.get(subtask.getEpicId()).removeSubtask(subtask.getId());
+        }
+        subtasks.clear();
     }
 }

@@ -2,11 +2,12 @@ package manager.history.task;
 
 import java.util.ArrayList;
 import java.util.List;
+
 class Epic extends Task {
     private List<Subtask> subtasks = new ArrayList<>();
 
-    public Epic(String name, String description, TaskStatus status) {
-        super(name, description, status);
+    public Epic(String name, String description) {
+        super(name, description);
     }
 
     public void addSubtask(Subtask subtask) {
@@ -32,7 +33,7 @@ class Epic extends Task {
 
     @Override
     public String toString() {
-        return "manager.history.task.Epic {" +
+        return "Epic {" +
                 "id= " + getId() +
                 ", name= '" + getName() + '\'' +
                 ", description= " + getDescription() +

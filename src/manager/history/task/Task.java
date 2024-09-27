@@ -6,10 +6,10 @@ class Task {
     private String description;
     private TaskStatus status;
 
-    public Task(String name, String description, TaskStatus status) {
+    public Task(String name, String description) {
         this.name = name;
         this.description = description;
-        this.status = status;
+        this.status = TaskStatus.NEW;
     }
 
     public int getId() {
@@ -46,7 +46,7 @@ class Task {
 
     @Override
     public String toString() {
-        return "manager.history.task.Task {" +
+        return "Task {" +
                 "id= " + id +
                 ", name= '" + name + '\'' +
                 ", description= " + description +

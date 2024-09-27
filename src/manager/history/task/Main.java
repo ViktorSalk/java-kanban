@@ -5,17 +5,17 @@ public class Main {
         TaskManager taskManager = new TaskManager();
 
         // Создание задач
-        Task task1 = new Task("Задача 1", "Описание задачи 1", TaskStatus.NEW);
-        Task task2 = new Task("Задача 2", "Описание задачи 2", TaskStatus.IN_PROGRESS);
+        Task task1 = new Task("Задача 1", "Описание задачи 1");
+        Task task2 = new Task("Задача 2", "Описание задачи 2");
 
         // Создание эпиков
-        Epic epic1 = taskManager.addEpic(new Epic("Эпик 1", "Описание эпика 1", TaskStatus.NEW));
-        Epic epic2 = taskManager.addEpic(new Epic("Эпик 2", "Описание эпика 2", TaskStatus.NEW));
+        Epic epic1 = taskManager.addEpic(new Epic("Эпик 1", "Описание эпика 1"));
+        Epic epic2 = taskManager.addEpic(new Epic("Эпик 2", "Описание эпика 2"));
 
         // Создание подзадач
-        Subtask subtask1 = new Subtask("Подзадача 1", "Описание подзадачи 1", TaskStatus.NEW, epic1.getId());
-        Subtask subtask2 = new Subtask("Подзадача 2", "Описание подзадачи 2", TaskStatus.IN_PROGRESS, epic1.getId());
-        Subtask subtask3 = new Subtask("Подзадача 3", "Описание подзадачи 3", TaskStatus.DONE, epic2.getId());
+        Subtask subtask1 = new Subtask("Подзадача 1", "Описание подзадачи 1", epic1.getId());
+        Subtask subtask2 = new Subtask("Подзадача 2", "Описание подзадачи 2", epic1.getId());
+        Subtask subtask3 = new Subtask("Подзадача 3", "Описание подзадачи 3", epic2.getId());
 
         // Добавление задач в менеджер
         taskManager.addTask(task1);
@@ -83,8 +83,11 @@ public class Main {
         System.out.println();
         System.out.println("Проверка обновления статуса эпика:");
         System.out.println(String.format("Статус эпика 2: %s", taskManager.getEpicById(epic2.getId()).getStatus()));
-        taskManager.updateEpicStatus(epic2.getId());
+        //  Добавление новой подзадачи для обновления статуса эпика 2
+        Subtask subtask4 = new Subtask("Подзадача 4", "Описание подзадачи 4", epic2.getId());
+        taskManager.addSubtask(subtask4);
         System.out.println(String.format("Статус эпика 2 после обновления: %s",
                 taskManager.getEpicById(epic2.getId()).getStatus()));
+
     }
 }
