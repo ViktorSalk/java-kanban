@@ -73,7 +73,7 @@ class InMemoryTaskManagerTest {
 
         List<Task> history = taskManager.getHistory();
 
-        assertEquals(10, history.size(), "Неверное количество элементов в истории после переполнения");
+        assertEquals(12, history.size(), "Неверное количество элементов в истории после переполнения");
     }
 
     @Test
@@ -205,5 +205,73 @@ class InMemoryTaskManagerTest {
         assertEquals(2, history.size());
         assertEquals(task2, history.get(1));
         assertEquals(task1, history.get(0));
+    }
+
+    @Test
+    void testHistoryManagerWithDuplicates() {
+        TaskManager taskManager = Managers.getDefault();
+
+        Task task1 = new Task("Задача 1", "Описание задачи 1");
+        taskManager.addTask(task1);
+        taskManager.getTaskById(task1.getId());
+        taskManager.getTaskById(task1.getId());
+
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(1, history.size());
+        assertEquals(task1, history.get(0));
+    }
+
+    @Test
+    void testHistoryManagerWithRemove() {
+        TaskManager taskManager = Managers.getDefault();
+
+        Task task1 = new Task("Задача 1", "Описание задачи 1");
+        taskManager.addTask(task1);
+        taskManager.getTaskById(task1.getId());
+
+        Task task2 = new Task("Задача 2", "Описание задачи 2");
+        taskManager.addTask(task2);
+        taskManager.getTaskById(task2.getId());
+
+        taskManager.deleteTask(task1.getId());
+
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(1, history.size());
+        assertEquals(task2, history.get(0));
+    }
+
+    @Test
+    void testHistoryManagerWithRemoveEpic() {
+        TaskManager taskManager = Managers.getDefault();
+
+        Epic epic1 = taskManager.addEpic(new Epic("Эпик 1", "Описание эпика 1"));
+        Subtask subtask1 = taskManager.addSubtask(new Subtask("Подзадача 1", "Описание подзадачи 1", epic1.getId()));
+        taskManager.getEpicById(epic1.getId());
+        taskManager.getSubtaskById(subtask1.getId());
+
+        taskManager.deleteEpic(epic1.getId());
+
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(0, history.size());
+    }
+
+    @Test
+    void testHistoryManagerWithRemoveSubtask() {
+        TaskManager taskManager = Managers.getDefault();
+
+        Epic epic1 = taskManager.addEpic(new Epic("Эпик 1", "Описание эпика 1"));
+        Subtask subtask1 = taskManager.addSubtask(new Subtask("Подзадача 1", "Описание подзадачи 1", epic1.getId()));
+        taskManager.getEpicById(epic1.getId());
+        taskManager.getSubtaskById(subtask1.getId());
+
+        taskManager.deleteSubtask(subtask1.getId());
+
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(1, history.size());
+        assertEquals(epic1, history.get(0));
     }
 }

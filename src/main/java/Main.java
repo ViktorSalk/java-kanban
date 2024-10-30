@@ -91,5 +91,30 @@ public class Main {
         for (Task task : taskManager.getHistory()) {
             System.out.println(task);
         }
+
+        // Пользовательский сценарий
+        System.out.println("\nПользовательский сценарий:");
+        taskManager.getTaskById(task1.getId());
+        taskManager.getEpicById(epic1.getId());
+        taskManager.getSubtaskById(subtask1.getId());
+        taskManager.getEpicById(epic2.getId());
+        taskManager.getTaskById(task2.getId());
+
+        System.out.println("История просмотров:");
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
+
+        taskManager.deleteTask(task1.getId());
+        System.out.println("История просмотров после удаления задачи 1:");
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
+
+        taskManager.deleteEpic(epic1.getId());
+        System.out.println("История просмотров после удаления эпика 1:");
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
     }
 }

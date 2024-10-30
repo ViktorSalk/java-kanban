@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class InMemoryTaskManager implements TaskManager {
     private int nextTaskId = 1;
-    private final Map<Integer, Task> tasks = new HashMap<>(); // Обозначаю интерфейс Map
+    private final Map<Integer, Task> tasks = new HashMap<>();
     private final Map<Integer, Epic> epics = new HashMap<>();
     private final Map<Integer, Subtask> subtasks = new HashMap<>();
     private final HistoryManager historyManager = Managers.getDefaultHistory();
@@ -38,6 +38,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     public void deleteTask(int id) {
         tasks.remove(id);
+        historyManager.remove(id);
     }
 
     public List<Task> getAllTasks() {
@@ -72,6 +73,7 @@ public class InMemoryTaskManager implements TaskManager {
                 deleteSubtask(subtask.getId());
             }
         }
+        historyManager.remove(id);
     }
 
     public List<Epic> getAllEpics() {
@@ -116,10 +118,8 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     public void deleteSubtask(int id) {
-        Subtask subtask = subtasks.remove(id);
-        if (subtask != null) {
-            epics.get(subtask.getEpicId()).removeSubtask(id);
-        }
+        subtasks.remove(id);
+        historyManager.remove(id);
     }
 
     public List<Subtask> getAllSubtasks() {
