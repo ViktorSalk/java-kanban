@@ -67,9 +67,9 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private static class Node {
-        Task task;
-        Node next;
-        Node prev;
+        final Task task; // Заменено на final
+        Node next; // Добавлен модификатор доступа
+        Node prev; // Добавлен модификатор доступа
 
         public Node(Task task) {
             this.task = task;
