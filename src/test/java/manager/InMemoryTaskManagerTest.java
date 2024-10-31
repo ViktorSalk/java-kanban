@@ -1,13 +1,16 @@
-package manager.history.task.manager;
+package manager;
 
-import manager.history.HistoryManager;
-import manager.history.InMemoryHistoryManager;
-import manager.history.task.Epic;
-import manager.history.task.Subtask;
-import manager.history.task.Task;
-import manager.history.task.TaskStatus;
+import history.HistoryManager;
+import history.InMemoryHistoryManager;
+import task.Epic;
+import task.Subtask;
+import task.Task;
+import task.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import manager.InMemoryTaskManager;
+import manager.Managers;
+import manager.TaskManager;
 
 import java.util.List;
 

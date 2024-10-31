@@ -1,9 +1,9 @@
-import manager.history.task.Epic;
-import manager.history.task.Subtask;
-import manager.history.task.Task;
-import manager.history.task.TaskStatus;
-import manager.history.task.manager.Managers;
-import manager.history.task.manager.TaskManager;
+import task.Epic;
+import task.Subtask;
+import task.Task;
+import task.TaskStatus;
+import manager.Managers;
+import manager.TaskManager;
 
 public class Main {
     public static void main(String[] args) {

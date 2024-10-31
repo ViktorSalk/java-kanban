@@ -1,10 +1,11 @@
-package manager.history;
+package history;
 
-import manager.history.task.Epic;
-import manager.history.task.Subtask;
-import manager.history.task.Task;
-import manager.history.task.manager.Managers;
-import manager.history.task.manager.TaskManager;
+import history.HistoryManager;
+import task.Epic;
+import task.Subtask;
+import task.Task;
+import manager.Managers;
+import manager.TaskManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
