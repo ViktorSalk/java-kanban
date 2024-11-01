@@ -1,6 +1,5 @@
 package history;
 
-import history.HistoryManager;
 import task.Epic;
 import task.Subtask;
 import task.Task;

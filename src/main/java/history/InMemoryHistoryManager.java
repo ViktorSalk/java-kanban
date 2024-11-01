@@ -24,12 +24,11 @@ public class InMemoryHistoryManager implements HistoryManager {
             Node newNode = new Node(task);
             if (head == null) {
                 head = newNode;
-                tail = newNode;
             } else {
                 tail.next = newNode;
                 newNode.prev = tail;
-                tail = newNode;
             }
+            tail = newNode; // Вынесено за пределы проверки
             taskNodes.put(task.getId(), newNode);
         }
     }
@@ -67,9 +66,9 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private static class Node {
-        final Task task; // Заменено на final
-        Node next; // Добавлен модификатор доступа
-        Node prev; // Добавлен модификатор доступа
+        private final Task task; // Заменено на final
+        private Node next; // Изменено на private
+        private Node prev; // Изменено на private
 
         public Node(Task task) {
             this.task = task;
