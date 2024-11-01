@@ -1,8 +1,8 @@
-package manager.history.task.manager;
+package manager;
 
-import manager.history.task.Epic;
-import manager.history.task.Subtask;
-import manager.history.task.Task;
+import task.Epic;
+import task.Subtask;
+import task.Task;
 
 import java.util.List;
 

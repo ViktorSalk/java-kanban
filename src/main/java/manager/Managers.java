@@ -1,7 +1,7 @@
-package manager.history.task.manager;
+package manager;
 
-import manager.history.HistoryManager;
-import manager.history.InMemoryHistoryManager;
+import history.HistoryManager;
+import history.InMemoryHistoryManager;
 
 public class Managers {
     private Managers() {

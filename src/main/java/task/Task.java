@@ -1,4 +1,4 @@
-package manager.history.task;
+package task;
 
 public class Task {
     private int id;

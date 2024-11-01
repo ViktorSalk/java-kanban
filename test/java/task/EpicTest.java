@@ -1,7 +1,7 @@
-package manager.history.task;
+package task;
 
-import manager.history.task.manager.InMemoryTaskManager;
-import manager.history.task.manager.TaskManager;
+import manager.InMemoryTaskManager;
+import manager.TaskManager;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,7 +17,7 @@ class EpicTest {
         Subtask subtask = new Subtask("Подзадача 1", "Описание подзадачи 1", epic.getId());
         taskManager.addSubtask(subtask);
         assertEquals(1, epic.getSubtasks().size());
-        assertEquals(subtask, epic.getSubtasks().get(0));
+        assertEquals(subtask, epic.getSubtasks().getFirst());
     }
 
     @Test
@@ -27,7 +27,7 @@ class EpicTest {
         Subtask subtask2 = taskManager.addSubtask(new Subtask("Подзадача 2", "Описание подзадачи 2", epic.getId()));
         epic.removeSubtask(subtask1.getId());
         assertEquals(1, epic.getSubtasks().size());
-        assertEquals(subtask2, epic.getSubtasks().get(0));
+        assertEquals(subtask2, epic.getSubtasks().getFirst());
     }
 
     @Test
@@ -48,6 +48,6 @@ class EpicTest {
         Subtask subtask2 = taskManager.addSubtask(new Subtask("Подзадача 2", "Описание подзадачи 2", epic.getId()));
         subtask1.setStatus(TaskStatus.DONE);
         epic.updateSubtask(subtask1);
-        assertEquals(TaskStatus.DONE, epic.getSubtasks().get(0).getStatus());
+        assertEquals(TaskStatus.DONE, epic.getSubtasks().getFirst().getStatus());
     }
 }
