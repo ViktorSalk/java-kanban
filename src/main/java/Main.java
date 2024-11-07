@@ -1,9 +1,9 @@
-import manager.history.task.Epic;
-import manager.history.task.Subtask;
-import manager.history.task.Task;
-import manager.history.task.TaskStatus;
-import manager.history.task.manager.Managers;
-import manager.history.task.manager.TaskManager;
+import task.Epic;
+import task.Subtask;
+import task.Task;
+import task.TaskStatus;
+import manager.Managers;
+import manager.TaskManager;
 
 public class Main {
     public static void main(String[] args) {
@@ -88,6 +88,31 @@ public class Main {
         // Вывод истории просмотров
         System.out.println();
         System.out.println("История просмотров:");
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
+
+        // Пользовательский сценарий
+        System.out.println("\nПользовательский сценарий:");
+        taskManager.getTaskById(task1.getId());
+        taskManager.getEpicById(epic1.getId());
+        taskManager.getSubtaskById(subtask1.getId());
+        taskManager.getEpicById(epic2.getId());
+        taskManager.getTaskById(task2.getId());
+
+        System.out.println("История просмотров:");
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
+
+        taskManager.deleteTask(task1.getId());
+        System.out.println("История просмотров после удаления задачи 1:");
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
+
+        taskManager.deleteEpic(epic1.getId());
+        System.out.println("История просмотров после удаления эпика 1:");
         for (Task task : taskManager.getHistory()) {
             System.out.println(task);
         }
