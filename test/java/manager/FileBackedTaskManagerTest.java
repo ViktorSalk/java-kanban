@@ -12,15 +12,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FileBackedTaskManagerTest {
 
-    private final File tempFile = new File("temp_tasks.csv");
+    private File tempFile;
     private FileBackedTaskManager taskManager;
 
     @BeforeEach
     void setUp() throws IOException {
-        // Удаляем файл, если он существует, чтобы начать с пустого состояния
-        if (tempFile.exists()) {
-            Files.delete(tempFile.toPath());
-        }
+        // Создаем временный файл для тестирования через File.createTempFile
+        tempFile = File.createTempFile("Временные задачи", ".csv");
+        tempFile.deleteOnExit(); // Убеждаемся, что он будет удален после завершения теста
         taskManager = new FileBackedTaskManager(tempFile);
     }
 
@@ -61,7 +60,6 @@ class FileBackedTaskManagerTest {
 
         // Создаем новый экземпляр FileBackedTaskManager для загрузки задач
         FileBackedTaskManager newTaskManager = new FileBackedTaskManager(tempFile);
-        newTaskManager.loadFromFile();
 
         // Проверяем, что загруженные задачи соответствуют добавленным
         assertEquals(2, newTaskManager.getAllTasks().size(), "Должно быть 2 задачи.");
