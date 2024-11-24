@@ -5,6 +5,7 @@ import task.Subtask;
 import task.Task;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskManager {
     Task addTask(Task task);
@@ -46,4 +47,10 @@ public interface TaskManager {
     void clearEpics();
 
     void clearSubtasks();
+
+    Optional<Task> getTaskByIdOptional(int id);
+
+    Optional<Epic> getEpicByIdOptional(int id);
+
+    Optional<Subtask> getSubtaskByIdOptional(int id);
 }
