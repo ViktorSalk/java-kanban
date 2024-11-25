@@ -50,4 +50,8 @@ public class Epic extends Task {
 
     public void updateSubtask(Subtask subtask1) {
     }
+
+    public TaskType getType() {
+        return TaskType.EPIC;
+    }
 }

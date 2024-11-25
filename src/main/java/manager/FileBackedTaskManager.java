@@ -34,9 +34,9 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 }
                 // Добавляйте задачи только в том случае, если они еще не существуют
                 for (Task task : tempTaskMap.values()) {
-                    if (task instanceof Epic) {
+                    if (task.getType() == TaskType.EPIC) {
                         addEpic((Epic) task);
-                    } else if (task instanceof Subtask) {
+                    } else if (task.getType() == TaskType.SUBTASK) {
                         addSubtask((Subtask) task);
                     } else {
                         addTask(task);
@@ -137,12 +137,12 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     // Преобразуйте задачу в строковое представление CSV
     private String toString(Task task) {
-        if (task instanceof Subtask) {
+        if (task.getType() == TaskType.SUBTASK) {
             return String.format("%d,%s,%s,%s,%s,%d,%s,%d", task.getId(), TaskType.SUBTASK,
                     task.getName(), task.getStatus(), task.getDescription(),
                     task.getDuration().toMinutes(), task.getStartTime(),
                     ((Subtask) task).getEpicId());
-        } else if (task instanceof Epic) {
+        } else if (task.getType() == TaskType.EPIC) {
             return String.format("%d,%s,%s,%s,%s,%d,%s,", task.getId(), TaskType.EPIC,
                     task.getName(), task.getStatus(), task.getDescription(),
                     task.getDuration().toMinutes(), task.getStartTime());

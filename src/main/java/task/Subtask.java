@@ -24,4 +24,8 @@ public class Subtask extends Task {
                 ", startTime= " + getStartTime() +
                 '}';
     }
+
+    public TaskType getType() {
+        return TaskType.SUBTASK;
+    }
 }

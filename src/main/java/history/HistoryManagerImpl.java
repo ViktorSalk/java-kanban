@@ -21,7 +21,7 @@ public class HistoryManagerImpl implements HistoryManager {
 
     @Override
     public void add(Task task) {
-        if (task != null && !history.stream().anyMatch(t -> t.getId() == task.getId())) {
+        if (history.stream().noneMatch(existingTask -> existingTask.getId() == task.getId())) {
             history.add(task);
         }
     }

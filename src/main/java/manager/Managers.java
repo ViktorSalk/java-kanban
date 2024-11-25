@@ -4,6 +4,15 @@ import history.HistoryManager;
 import history.InMemoryHistoryManager;
 
 public class Managers {
+    private static InMemoryTaskManager taskManager;
+
+    public static InMemoryTaskManager getInMemoryTaskManager() {
+        if (taskManager == null) {
+            taskManager = new InMemoryTaskManager();
+        }
+        return taskManager;
+    }
+
     private Managers() {
     }
 

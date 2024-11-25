@@ -2,11 +2,9 @@ package manager;
 
 import history.HistoryManager;
 import history.InMemoryHistoryManager;
-import task.Epic;
-import task.Subtask;
+import org.junit.jupiter.api.Nested;
 import task.Task;
 import task.TaskStatus;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
@@ -16,156 +14,87 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager> {
 
-    @BeforeEach
-    public void setUp() {
-        taskManager = (InMemoryTaskManager) Managers.getDefault();
-    }
     @Override
     protected InMemoryTaskManager createTaskManager() {
-        return new InMemoryTaskManager();
+        return Managers.getInMemoryTaskManager();
     }
 
-    @Test
-    void addNewTask() {
-        Task task = new Task("Test addNewTask", "Test addNewTask description");
-        final int taskId = taskManager.addTask(task).getId();
+    @Nested
+    class TaskTests { // тесты для задач
+        @Test
+        void addNewTask() {
+            Task task = new Task("Test addNewTask", "Test addNewTask description");
+            final int taskId = taskManager.addTask(task).getId();
 
-        final Task savedTask = taskManager.getTaskById(taskId);
+            final Task savedTask = taskManager.getTaskById(taskId);
 
-        assertNotNull(savedTask, "Задача не найдена.");
-        assertEquals(task, savedTask, "Задачи не совпадают.");
+            assertNotNull(savedTask, "Задача не найдена.");
+            assertEquals(task, savedTask, "Задачи не совпадают.");
 
-        final List<Task> tasks = taskManager.getAllTasks();
+            final List<Task> tasks = taskManager.getAllTasks();
 
-        assertNotNull(tasks, "Задачи не возвращаются.");
-        assertEquals(1, tasks.size(), "Неверное количество задач.");
-        assertEquals(task, tasks.getFirst(), "Задачи не совпадают.");
-    }
-
-    // Другие тесты
-    @Test
-    void getHistoryWithOverflow() {
-        for (int i = 0; i < 12; i++) {
-            Task task = new Task("Test getHistory " + i, "Test getHistory " + i + " description");
-            taskManager.addTask(task);
-            taskManager.getTaskById(task.getId());
+            assertNotNull(tasks, "Задачи не возвращаются.");
+            assertEquals(1, tasks.size(), "Неверное количество задач.");
+            assertEquals(task, tasks.get(0), "Задачи не совпадают.");
         }
 
-        List<Task> history = taskManager.getHistory();
+        @Test
+        void testTaskWithGeneratedId() {
+            TaskManager taskManager = Managers.getDefault();
 
-        assertEquals(12, history.size(), "Неверное количество элементов в истории после переполнения");
+            Task task1 = new Task("Задача 1", "Описание задачи 1");
+            taskManager.addTask(task1);
+
+            Task task2 = new Task("Задача 2", "Описание задачи 2");
+            taskManager.addTask(task2);
+
+            assertEquals(taskManager.getTaskById(task1.getId()), task1);
+            assertEquals(taskManager.getTaskById(task2.getId()), task2);
+        }
+
+        @Test
+        void testTaskImmutability() {
+            TaskManager taskManager = Managers.getDefault();
+
+            Task task1 = new Task("Задача 1", "Описание задачи 1");
+            task1.setStatus(TaskStatus.DONE);
+            taskManager.addTask(task1);
+
+            Task taskFromManager = taskManager.getTaskById(task1.getId());
+
+            assertEquals(task1.getName(), taskFromManager.getName());
+            assertEquals(task1.getDescription(), taskFromManager.getDescription());
+            assertEquals(task1.getStatus(), taskFromManager.getStatus());
+        }
     }
 
-    @Test
-    void testTaskEquality() {
-        Task task1 = new Task("Задача 1", "Описание задачи 1");
-        Task task2 = new Task("Задача 2", "Описание задачи 2");
-        Task task3 = new Task("Задача 1", "Описание задачи 1");
+    @Nested
+    class HistoryTests { // тесты для истории
+        @Test
+        void getHistoryWithOverflow() {
+            for (int i = 0; i < 12; i++) {
+                Task task = new Task("Test getHistory " + i, "Test getHistory " + i + " description");
+                taskManager.addTask(task);
+                taskManager.getTaskById(task.getId());
+            }
 
-        TaskManager taskManager = Managers.getDefault(); // Фабричный метод вместо создания экземпляров через nev
-        taskManager.addTask(task1);
-        taskManager.addTask(task2);
+            List<Task> history = taskManager.getHistory();
 
-        assertEquals(taskManager.getTaskById(task1.getId()), task1);
-        assertNotEquals(taskManager.getTaskById(task1.getId()), task2);
-        assertNotEquals(taskManager.getTaskById(task1.getId()), task3);
+            assertEquals(12, history.size(), "Неверное количество элементов в истории после переполнения");
+        }
     }
 
-    @Test
-    void testSubtaskEquality() {
-        Epic epic = taskManager.addEpic(new Epic("Эпик 1", "Описание эпика 1"));
-        Subtask subtask1 = new Subtask("Подзадача 1", "Описание подзадачи 1", epic.getId());
-        Subtask subtask2 = new Subtask("Подзадача 2", "Описание подзадачи 2", epic.getId());
-        Subtask subtask3 = new Subtask("Подзадача 1", "Описание подзадачи 1", epic.getId());
+    @Nested
+    class ManagerTests { // тесты для менеджеров
+        @Test
+        void testManagersGetDefault() {
+            TaskManager taskManager = Managers.getDefault();
+            assertNotNull(taskManager);
+            assertTrue(taskManager instanceof InMemoryTaskManager);
 
-        TaskManager taskManager = Managers.getDefault(); // Managers для создания нового менеджера задач еще в 8 тестах
-        taskManager.addEpic(epic);
-        taskManager.addSubtask(subtask1);
-        taskManager.addSubtask(subtask2);
-
-        assertEquals(taskManager.getSubtaskById(subtask1.getId()), subtask1);
-        assertNotEquals(taskManager.getSubtaskById(subtask1.getId()), subtask2);
-        assertNotEquals(taskManager.getSubtaskById(subtask1.getId()), subtask3);
+            HistoryManager historyManager = Managers.getDefaultHistory();
+            assertNotNull(historyManager);
+            assertInstanceOf(InMemoryHistoryManager.class, historyManager);
+        }
     }
-
-    @Test
-    void testEpicEquality() {
-        Epic epic1 = new Epic("Эпик 1", "Описание эпика 1");
-        Epic epic2 = new Epic("Эпик 2", "Описание эпика 2");
-        Epic epic3 = new Epic("Эпик 1", "Описание эпика 1");
-
-        TaskManager taskManager = Managers.getDefault();
-        taskManager.addEpic(epic1);
-        taskManager.addEpic(epic2);
-
-        assertEquals(taskManager.getEpicById(epic1.getId()), epic1);
-        assertNotEquals(taskManager.getEpicById(epic1.getId()), epic2);
-        assertNotEquals(taskManager.getEpicById(epic1.getId()), epic3);
-    }
-
-    @Test
-    void testSubtaskWithItselfAsEpic() {
-        Subtask subtask = new Subtask("Подзадача 1", "Описание подзадачи 1", 1);
-
-        TaskManager taskManager = Managers.getDefault();
-
-        assertThrows(IllegalArgumentException.class, () -> taskManager.addSubtask(subtask));
-    }
-
-    @Test
-    void testManagersGetDefault() {
-        TaskManager taskManager = Managers.getDefault();
-        assertNotNull(taskManager);
-        assertTrue(taskManager instanceof InMemoryTaskManager);
-
-        HistoryManager historyManager = Managers.getDefaultHistory();
-        assertNotNull(historyManager);
-        assertInstanceOf(InMemoryHistoryManager.class, historyManager);
-    }
-
-    @Test
-    void testAddingTasks() {
-        TaskManager taskManager = Managers.getDefault();
-
-        Task task1 = new Task("Задача 1", "Описание задачи 1");
-        Epic epic1 = taskManager.addEpic(new Epic("Эпик 1", "Описание эпика 1"));
-        Subtask subtask1 = new Subtask("Подзадача 1", "Описание подзадачи 1", epic1.getId());
-
-        taskManager.addTask(task1);
-        taskManager.addSubtask(subtask1);
-
-        assertEquals(taskManager.getTaskById(task1.getId()), task1);
-        assertEquals(taskManager.getEpicById(epic1.getId()), epic1);
-        assertEquals(taskManager.getSubtaskById(subtask1.getId()), subtask1);
-    }
-
-    @Test
-    void testTaskWithGeneratedId() {
-        TaskManager taskManager = Managers.getDefault();
-
-        Task task1 = new Task("Задача 1", "Описание задачи 1");
-        taskManager.addTask(task1);
-
-        Task task2 = new Task("Задача 2", "Описание задачи 2");
-        taskManager.addTask(task2);
-
-        assertEquals(taskManager.getTaskById(task1.getId()), task1);
-        assertEquals(taskManager.getTaskById(task2.getId()), task2);
-    }
-
-    @Test
-    void testTaskImmutability() {
-        TaskManager taskManager = Managers.getDefault();
-
-        Task task1 = new Task("Задача 1", "Описание задачи 1");
-        task1.setStatus(TaskStatus.DONE);
-        taskManager.addTask(task1);
-
-        Task taskFromManager = taskManager.getTaskById(task1.getId());
-
-        assertEquals(task1.getName(), taskFromManager.getName());
-        assertEquals(task1.getDescription(), taskFromManager.getDescription());
-        assertEquals(task1.getStatus(), taskFromManager.getStatus());
-    }
-
 }

@@ -104,4 +104,8 @@ public class Task {
     public int hashCode() {
         return Objects.hash(id, name, description, status, duration, startTime);
     }
+
+    public TaskType getType() {
+        return TaskType.TASK;
+    }
 }
