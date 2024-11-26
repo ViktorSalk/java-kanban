@@ -3,7 +3,6 @@ package manager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import task.Task;
-import task.TaskStatus;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -11,11 +10,11 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TimeSlotManagerTest {
-    private InMemoryTaskManager taskManager;
+    private TaskManager taskManager; // Изменен тип на TaskManager
 
     @BeforeEach
     public void setUp() {
-        taskManager = new InMemoryTaskManager();
+        taskManager = Managers.getDefault(); // Использован фабричный метод Managers.getDefault()
     }
 
     @Test
@@ -41,7 +40,7 @@ public class TimeSlotManagerTest {
         task2.setDuration(Duration.ofMinutes(30));
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            taskManager.addTask(task2); // Attempt to add overlapping task
+            taskManager.addTask(task2); // Попытка добавить перекрывающуюся задачу
         });
 
         assertEquals("Task overlaps with existing task.", exception.getMessage());

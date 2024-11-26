@@ -16,7 +16,7 @@ public class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager
 
     @Override
     protected InMemoryTaskManager createTaskManager() {
-        return Managers.getInMemoryTaskManager();
+        return (InMemoryTaskManager) Managers.getDefault(); // Возвращает экземпляр InMemoryTaskManager
     }
 
     @Nested
