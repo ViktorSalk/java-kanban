@@ -2,6 +2,7 @@ package history;
 
 import task.Task;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +64,11 @@ public class InMemoryHistoryManager implements HistoryManager {
             current = current.next;
         }
         return history;
+    }
+
+    @Override
+    public void loadFromFile(String filename) throws IOException {
+        // реализуйте логику для загрузки истории из файла
     }
 
     private static class Node {

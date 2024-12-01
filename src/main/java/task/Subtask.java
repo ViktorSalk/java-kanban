@@ -20,6 +20,12 @@ public class Subtask extends Task {
                 ", description= " + getDescription() +
                 ", status= " + getStatus() +
                 ", epicId= " + epicId +
+                ", duration= " + getDuration() +
+                ", startTime= " + getStartTime() +
                 '}';
+    }
+
+    public TaskType getType() {
+        return TaskType.SUBTASK;
     }
 }

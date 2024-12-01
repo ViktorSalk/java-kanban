@@ -10,21 +10,33 @@ import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileBackedTaskManagerTest {
+public class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
     private File tempFile;
     private FileBackedTaskManager taskManager;
 
+    @Override
+    protected FileBackedTaskManager createTaskManager() throws IOException {
+        tempFile = File.createTempFile("Временные задачи", ".csv");
+        tempFile.deleteOnExit(); // Убеждаемся, что он будет удален после завершения теста
+        return new FileBackedTaskManager(tempFile);
+    }
+
     @BeforeEach
-    void setUp() throws IOException {
-        // Создаем временный файл для тестирования через File.createTempFile
+    public void setUp() throws IOException {
+        super.setUp();
         tempFile = File.createTempFile("Временные задачи", ".csv");
         tempFile.deleteOnExit(); // Убеждаемся, что он будет удален после завершения теста
         taskManager = new FileBackedTaskManager(tempFile);
     }
 
     @Test
-    void testSaveAndLoadEmptyFile() {
+    void testSaveAndLoadEmptyFile() throws IOException {
+        // Создаем временный файл для тестирования через File.createTempFile
+        tempFile = File.createTempFile("Временные задачи", ".csv");
+        tempFile.deleteOnExit(); // Убедимся, что он будет удален после завершения теста
+        taskManager = new FileBackedTaskManager(tempFile);
+
         // Проверяем, что в новом менеджере задач нет задач
         assertTrue(taskManager.getAllTasks().isEmpty(), "Менеджер задач не должен содержать задач.");
 

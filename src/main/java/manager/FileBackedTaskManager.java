@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +34,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 }
                 // Добавляйте задачи только в том случае, если они еще не существуют
                 for (Task task : tempTaskMap.values()) {
-                    if (task instanceof Epic) {
+                    if (task.getType() == TaskType.EPIC) {
                         addEpic((Epic) task);
-                    } else if (task instanceof Subtask) {
+                    } else if (task.getType() == TaskType.SUBTASK) {
                         addSubtask((Subtask) task);
-                    } else if (task instanceof Task) {
+                    } else {
                         addTask(task);
                     }
                 }
@@ -48,6 +50,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         }
     }
 
+    private void updateNextTaskId() {
+    }
     // Другие методы остаются неизменными...
 
     @Override
@@ -95,21 +99,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         save(); // Сохранить состояние после удаления
     }
 
-
-    private void updateNextTaskId() {
-        int maxId = 0;
-        for (Task task : getAllTasks()) {
-            maxId = Math.max(maxId, task.getId());
-        }
-        for (Epic epic : getAllEpics()) {
-            maxId = Math.max(maxId, epic.getId());
-        }
-        for (Subtask subtask : getAllSubtasks()) {
-            maxId = Math.max(maxId, subtask.getId());
-        }
-        nextTaskId = maxId + 1; // Set next available ID to max ID + 1
-    }
-
     @Override
     public void deleteEpic(int id) {
         super.deleteEpic(id);
@@ -125,7 +114,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     // Метод сохранения всех задач, эпопей и подзадач в файл
     protected void save() {
         StringBuilder sb = new StringBuilder();
-        sb.append("id,type,name,status,description,epic\n");
+        sb.append("id,type,name,status,description,duration,startTime,epic\n");
 
         for (Epic epic : getAllEpics()) {
             sb.append(toString(epic)).append("\n");
@@ -148,16 +137,19 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     // Преобразуйте задачу в строковое представление CSV
     private String toString(Task task) {
-        if (task instanceof Subtask) {
-            return String.format("%d,%s,%s,%s,%s,%d", task.getId(), TaskType.SUBTASK,
+        if (task.getType() == TaskType.SUBTASK) {
+            return String.format("%d,%s,%s,%s,%s,%d,%s,%d", task.getId(), TaskType.SUBTASK,
                     task.getName(), task.getStatus(), task.getDescription(),
+                    task.getDuration().toMinutes(), task.getStartTime(),
                     ((Subtask) task).getEpicId());
-        } else if (task instanceof Epic) {
-            return String.format("%d,%s,%s,%s,%s,", task.getId(), TaskType.EPIC,
-                    task.getName(), task.getStatus(), task.getDescription());
+        } else if (task.getType() == TaskType.EPIC) {
+            return String.format("%d,%s,%s,%s,%s,%d,%s,", task.getId(), TaskType.EPIC,
+                    task.getName(), task.getStatus(), task.getDescription(),
+                    task.getDuration().toMinutes(), task.getStartTime());
         } else {
-            return String.format("%d,%s,%s,%s,%s,", task.getId(), TaskType.TASK,
-                    task.getName(), task.getStatus(), task.getDescription());
+            return String.format("%d,%s,%s,%s,%s,%d,%s,", task.getId(), TaskType.TASK,
+                    task.getName(), task.getStatus(), task.getDescription(),
+                    task.getDuration().toMinutes(), task.getStartTime());
         }
     }
 
@@ -169,23 +161,34 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         String name = parts[2];
         TaskStatus status = TaskStatus.valueOf(parts[3]);
         String description = parts[4];
+        Duration duration = Duration.ofMinutes(Long.parseLong(parts[5]));
+        LocalDateTime startTime = null;
+        if (parts[6] != null && !parts[6].equals("null")) {
+            startTime = LocalDateTime.parse(parts[6]);
+        }
 
         switch (type) {
             case TASK:
                 Task task = new Task(name, description);
                 task.setId(id);
                 task.setStatus(status);
+                task.setDuration(duration);
+                task.setStartTime(startTime);
                 return task;
             case EPIC:
                 Epic epic = new Epic(name, description);
                 epic.setId(id);
                 epic.setStatus(status);
+                epic.setDuration(duration);
+                epic.setStartTime(startTime);
                 return epic;
             case SUBTASK:
-                int epicId = Integer.parseInt(parts[5]);
+                int epicId = Integer.parseInt(parts[7]);
                 Subtask subtask = new Subtask(name, description, epicId);
                 subtask.setId(id);
                 subtask.setStatus(status);
+                subtask.setDuration(duration);
+                subtask.setStartTime(startTime);
                 return subtask;
             default:
                 throw new IllegalArgumentException("Unknown task type");
