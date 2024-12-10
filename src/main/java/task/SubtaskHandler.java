@@ -1,55 +1,43 @@
 package task;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import manager.HttpTaskServer;
 import manager.TaskManager;
+import http.HttpStatusCode;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class SubtaskHandler implements HttpHandler {
-    private final TaskManager taskManager;
-    private final Gson gson;
-
+public class SubtaskHandler extends AbstractTaskHandler {
     public SubtaskHandler(TaskManager taskManager) {
-        this.taskManager = taskManager;
-        this.gson = HttpTaskServer.getGson();
+        super(taskManager);
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        try {
-            String path = exchange.getRequestURI().getPath();
-            String method = exchange.getRequestMethod();
-            System.out.println("Получен " + method + " запрос по пути: " + path);
-
-            switch (method) {
-                case "GET":
-                    handleGet(exchange, path);
-                    break;
-                case "POST":
-                    handlePost(exchange);
-                    break;
-                case "DELETE":
-                    handleDelete(exchange, path);
-                    break;
-                default:
-                    sendResponse(exchange, "{\"error\": \"Method not allowed\"}", 405);
+    protected void handleGet(HttpExchange exchange, String path) throws IOException {
+        if (path.equals("/tasks/subtask")) {
+            List<Subtask> subtasks = taskManager.getAllSubtasks();
+            sendResponse(exchange, gson.toJson(subtasks), HttpStatusCode.OK.getCode());
+        } else if (path.contains("/epic/")) {
+            String[] parts = path.split("/");
+            int epicId = Integer.parseInt(parts[parts.length - 1]);
+            List<Subtask> subtasks = taskManager.getSubtasksByEpicId(epicId);
+            sendResponse(exchange, gson.toJson(subtasks), HttpStatusCode.OK.getCode());
+        } else {
+            String[] parts = path.split("/");
+            int id = Integer.parseInt(parts[parts.length - 1]);
+            Subtask subtask = taskManager.getSubtaskById(id);
+            if (subtask != null) {
+                sendResponse(exchange, gson.toJson(subtask), HttpStatusCode.OK.getCode());
+            } else {
+                sendResponse(exchange, "{\"error\": \"Subtask not found\"}", HttpStatusCode.NOT_FOUND.getCode());
             }
-        } catch (Exception e) {
-            System.out.println("Произошла ошибка: " + e.getMessage());
-            e.printStackTrace();
-            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 500);
         }
     }
 
-
-    private void handlePost(HttpExchange exchange) throws IOException {
+    @Override
+    protected void handlePost(HttpExchange exchange) throws IOException {
         try {
             InputStream inputStream = exchange.getRequestBody();
             String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -59,7 +47,7 @@ public class SubtaskHandler implements HttpHandler {
                 if (subtask.getId() != 0) {
                     // Обновление существующей подзадачи
                     if (taskManager.getSubtaskById(subtask.getId()) == null) {
-                        sendResponse(exchange, "{\"error\": \"Subtask not found\"}", 404);
+                        sendResponse(exchange, "{\"error\": \"Subtask not found\"}", HttpStatusCode.NOT_FOUND.getCode());
                         return;
                     }
                     taskManager.updateSubtask(subtask);
@@ -67,58 +55,29 @@ public class SubtaskHandler implements HttpHandler {
                     // Создание новой подзадачи
                     subtask = taskManager.addSubtask(subtask);
                 }
-                sendResponse(exchange, gson.toJson(subtask), 201);
+                sendResponse(exchange, gson.toJson(subtask), HttpStatusCode.CREATED.getCode());
             } catch (IllegalArgumentException e) {
                 if (e.getMessage().contains("overlaps")) {
-                    sendResponse(exchange, "{\"error\": \"Task time overlaps with existing task\"}", 406);
+                    sendResponse(exchange, "{\"error\": \"Task time overlaps with existing task\"}", HttpStatusCode.NOT_ACCEPTABLE.getCode());
                 } else {
                     throw e;
                 }
             }
         } catch (Exception e) {
-            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 400);
+            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", HttpStatusCode.BAD_REQUEST.getCode());
         }
     }
 
-    private void handleGet(HttpExchange exchange, String path) throws IOException {
-        if (path.equals("/tasks/subtask")) {
-            List<Subtask> subtasks = taskManager.getAllSubtasks();
-            sendResponse(exchange, gson.toJson(subtasks), 200);
-        } else if (path.contains("/epic/")) {
-            String[] parts = path.split("/");
-            int epicId = Integer.parseInt(parts[parts.length - 1]);
-            List<Subtask> subtasks = taskManager.getSubtasksByEpicId(epicId);
-            sendResponse(exchange, gson.toJson(subtasks), 200);
-        } else {
-            String[] parts = path.split("/");
-            int id = Integer.parseInt(parts[parts.length - 1]);
-            Subtask subtask = taskManager.getSubtaskById(id);
-            if (subtask != null) {
-                sendResponse(exchange, gson.toJson(subtask), 200);
-            } else {
-                sendResponse(exchange, "{\"error\": \"Subtask not found\"}", 404);
-            }
-        }
-    }
-
-    private void handleDelete(HttpExchange exchange, String path) throws IOException {
+    @Override
+    protected void handleDelete(HttpExchange exchange, String path) throws IOException {
         if (path.equals("/tasks/subtask")) {
             taskManager.clearSubtasks();
-            sendResponse(exchange, "{\"status\": \"success\"}", 200);
+            sendResponse(exchange, "{\"status\": \"success\"}", HttpStatusCode.OK.getCode());
         } else {
             String[] parts = path.split("/");
             int id = Integer.parseInt(parts[parts.length - 1]);
             taskManager.deleteSubtask(id);
-            sendResponse(exchange, "{\"status\": \"success\"}", 200);
-        }
-    }
-
-    private void sendResponse(HttpExchange exchange, String response, int code) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        exchange.sendResponseHeaders(code, bytes.length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
+            sendResponse(exchange, "{\"status\": \"success\"}", HttpStatusCode.OK.getCode());
         }
     }
 }

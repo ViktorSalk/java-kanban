@@ -1,9 +1,7 @@
 package task;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import manager.HttpTaskServer;
+import http.HttpStatusCode;
 import manager.TaskManager;
 
 import java.io.IOException;
@@ -11,137 +9,135 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class TaskHandler implements HttpHandler {
-    private final TaskManager taskManager;
-    private final Gson gson;
+public class TaskHandler extends AbstractTaskHandler {
+
 
     public TaskHandler(TaskManager taskManager) {
-        this.taskManager = taskManager;
-        this.gson = HttpTaskServer.getGson();
+        super(taskManager);
     }
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        try {
-            String path = exchange.getRequestURI().getPath();
-            String method = exchange.getRequestMethod();
-            System.out.println("Получен " + method + " запрос по пути: " + path);
-
-            switch (method) {
-                case "GET":
-                    handleGet(exchange, path);
-                    break;
-                case "POST":
-                    handlePost(exchange);
-                    break;
-                case "DELETE":
-                    handleDelete(exchange, path);
-                    break;
-                default:
-                    sendResponse(exchange, "{\"error\": \"Method not allowed\"}", 405);
-            }
-        } catch (Exception e) {
-            System.out.println("Произошла ошибка: " + e.getMessage());
-            e.printStackTrace();
-            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 500);
-        }
-    }
-
-    private void handleGet(HttpExchange exchange, String path) throws IOException {
+    protected void handleGet(HttpExchange httpExchange, String path) throws IOException {
         if (path.equals("/tasks/task")) {
             List<Task> tasks = taskManager.getAllTasks();
-            System.out.println("Получены задачи: " + tasks);
-            sendResponse(exchange, gson.toJson(tasks), 200);
+            sendResponse(httpExchange, gson.toJson(tasks), HttpStatusCode.OK);
         } else {
             String[] pathParts = path.split("/");
             if (pathParts.length == 4) {
                 try {
-                    int id = Integer.parseInt(pathParts[3]);
-                    Task task = taskManager.getTaskById(id);
+                    int taskId = Integer.parseInt(pathParts[3]);
+                    Task task = taskManager.getTaskById(taskId);
                     if (task != null) {
-                        sendResponse(exchange, gson.toJson(task), 200);
+                        sendResponse(httpExchange, gson.toJson(task), HttpStatusCode.OK);
                     } else {
-                        sendResponse(exchange, "{\"error\": \"Task not found\"}", 404);
+                        sendResponse(httpExchange,
+                                "{\"error\": \"Task not found\"}",
+                                HttpStatusCode.NOT_FOUND);
                     }
-                } catch (NumberFormatException e) {
-                    sendResponse(exchange, "{\"error\": \"Invalid task ID\"}", 400);
+                } catch (NumberFormatException formatException) {
+                    sendResponse(httpExchange,
+                            "{\"error\": \"Invalid task ID\"}",
+                            HttpStatusCode.BAD_REQUEST);
                 }
             } else {
-                sendResponse(exchange, "{\"error\": \"Invalid path\"}", 400);
+                sendResponse(httpExchange,
+                        "{\"error\": \"Invalid path\"}",
+                        HttpStatusCode.BAD_REQUEST);
             }
         }
     }
 
-    private void handlePost(HttpExchange exchange) throws IOException {
-        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        Task task = gson.fromJson(body, Task.class);
+    protected void handlePost(HttpExchange httpExchange) throws IOException {
+        try {
+            String body = new String(httpExchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Task task = gson.fromJson(body, Task.class);
 
-        // Проверяем, является ли это обновлением существующей задачи
-        if (task.getId() != 0) {
-            // Проверяем существование задачи
-            Task existingTask = taskManager.getTaskById(task.getId());
-            if (existingTask == null) {
-                System.out.println("Task not found with id: " + task.getId());
-                sendResponse(exchange, "{\"error\": \"Task not found\"}", 404);
-                return;
-            }
-
-            try {
-                taskManager.updateTask(task);
-                sendResponse(exchange, gson.toJson(task), 201);
-            } catch (IllegalArgumentException e) {
-                if (e.getMessage().contains("overlaps")) {
-                    sendResponse(exchange, "{\"error\": \"Task time overlaps with existing task\"}", 406);
-                } else {
-                    sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 400);
+            if (task.getId() != 0) {
+                Task existingTask = taskManager.getTaskById(task.getId());
+                if (existingTask == null) {
+                    sendResponse(httpExchange,
+                            "{\"error\": \"Task not found\"}",
+                            HttpStatusCode.NOT_FOUND);
+                    return;
+                }
+                try {
+                    taskManager.updateTask(task);
+                    sendResponse(httpExchange, gson.toJson(task), HttpStatusCode.CREATED);
+                } catch (IllegalArgumentException exception) {
+                    if (exception.getMessage().contains("overlaps")) {
+                        sendResponse(httpExchange,
+                                "{\"error\": \"Task time overlaps with existing task\"}",
+                                HttpStatusCode.NOT_ACCEPTABLE);
+                    } else {
+                        throw exception;
+                    }
+                }
+            } else {
+                try {
+                    Task newTask = taskManager.addTask(task);
+                    sendResponse(httpExchange, gson.toJson(newTask), HttpStatusCode.CREATED);
+                } catch (IllegalArgumentException exception) {
+                    if (exception.getMessage().contains("overlaps")) {
+                        sendResponse(httpExchange,
+                                "{\"error\": \"Task time overlaps with existing task\"}",
+                                HttpStatusCode.NOT_ACCEPTABLE);
+                    } else {
+                        throw exception;
+                    }
                 }
             }
-        } else {
-            // Создание новой задачи
-            try {
-                Task newTask = taskManager.addTask(task);
-                sendResponse(exchange, gson.toJson(newTask), 201);
-            } catch (IllegalArgumentException e) {
-                if (e.getMessage().contains("overlaps")) {
-                    sendResponse(exchange, "{\"error\": \"Task time overlaps with existing task\"}", 406);
-                } else {
-                    sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 400);
-                }
+        } catch (Exception exception) {
+            if (exception.getMessage().contains("overlaps")) {
+                sendResponse(httpExchange,
+                        "{\"error\": \"Task time overlaps with existing task\"}",
+                        HttpStatusCode.NOT_ACCEPTABLE);
+            } else {
+                System.out.println("Произошла ошибка: " + exception.getMessage());
+                sendResponse(httpExchange,
+                        "{\"error\": \"" + exception.getMessage() + "\"}",
+                        HttpStatusCode.INTERNAL_SERVER_ERROR);
             }
         }
     }
 
-    private void handleDelete(HttpExchange exchange, String path) throws IOException {
+    protected void handleDelete(HttpExchange httpExchange, String path) throws IOException {
         if (path.equals("/tasks/task")) {
             taskManager.clearTasks();
-            sendResponse(exchange, "{\"status\": \"success\"}", 200);
+            sendResponse(httpExchange, "{\"status\": \"success\"}", HttpStatusCode.OK);
         } else {
             String[] pathParts = path.split("/");
             if (pathParts.length == 4) {
                 try {
-                    int id = Integer.parseInt(pathParts[3]);
-                    Task task = taskManager.getTaskById(id);
+                    int taskId = Integer.parseInt(pathParts[3]);
+                    Task task = taskManager.getTaskById(taskId);
                     if (task == null) {
-                        sendResponse(exchange, "{\"error\": \"Task not found\"}", 404);
+                        sendResponse(httpExchange,
+                                "{\"error\": \"Task not found\"}",
+                                HttpStatusCode.NOT_FOUND);
                         return;
                     }
-                    taskManager.deleteTask(id);
-                    sendResponse(exchange, "{\"status\": \"success\"}", 200);
-                } catch (NumberFormatException e) {
-                    sendResponse(exchange, "{\"error\": \"Invalid task ID\"}", 400);
+                    taskManager.deleteTask(taskId);
+                    sendResponse(httpExchange, "{\"status\": \"success\"}", HttpStatusCode.OK);
+                } catch (NumberFormatException formatException) {
+                    sendResponse(httpExchange,
+                            "{\"error\": \"Invalid task ID\"}",
+                            HttpStatusCode.BAD_REQUEST);
                 }
             } else {
-                sendResponse(exchange, "{\"error\": \"Invalid path\"}", 400);
+                sendResponse(httpExchange,
+                        "{\"error\": \"Invalid path\"}",
+                        HttpStatusCode.BAD_REQUEST);
             }
         }
     }
 
-    private void sendResponse(HttpExchange exchange, String response, int code) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        exchange.sendResponseHeaders(code, bytes.length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
+    private void sendResponse(HttpExchange httpExchange, String response, HttpStatusCode statusCode)
+            throws IOException {
+        httpExchange.getResponseHeaders().set("Content-Type", "application/json");
+        byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
+        httpExchange.sendResponseHeaders(statusCode.getCode(), responseBytes.length);
+
+        try (OutputStream outputStream = httpExchange.getResponseBody()) {
+            outputStream.write(responseBytes);
         }
     }
 }

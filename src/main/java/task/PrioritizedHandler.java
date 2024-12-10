@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import manager.HttpTaskServer;
 import manager.TaskManager;
+import http.HttpStatusCode;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,27 +28,26 @@ public class PrioritizedHandler implements HttpHandler {
             String method = exchange.getRequestMethod();
 
             if (!"GET".equals(method)) {
-                sendResponse(exchange, "{\"error\": \"Method not allowed\"}", 405);
+                sendResponse(exchange, "{\"error\": \"Method not allowed\"}", HttpStatusCode.METHOD_NOT_ALLOWED.getCode());
                 return;
             }
 
             if (!"/tasks/prioritized".equals(path)) {
-                sendResponse(exchange, "{\"error\": \"Invalid path\"}", 404);
+                sendResponse(exchange, "{\"error\": \"Invalid path\"}", HttpStatusCode.NOT_FOUND.getCode());
                 return;
             }
 
             List<Task> prioritizedTasks = taskManager.getPrioritizedTasks();
-            sendResponse(exchange, gson.toJson(prioritizedTasks), 200); // 200 для GET запроса
+            sendResponse(exchange, gson.toJson(prioritizedTasks), HttpStatusCode.OK.getCode());
         } catch (Exception e) {
             System.out.println("Произошла ошибка: " + e.getMessage());
-            e.printStackTrace();
-            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 500);
+            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", HttpStatusCode.INTERNAL_SERVER_ERROR.getCode());
         }
     }
 
     private void handleGetPrioritized(HttpExchange exchange) throws IOException {
         List<Task> prioritizedTasks = taskManager.getPrioritizedTasks();
-        sendResponse(exchange, gson.toJson(prioritizedTasks), 200);
+        sendResponse(exchange, gson.toJson(prioritizedTasks), HttpStatusCode.OK.getCode());
     }
 
     private void sendResponse(HttpExchange exchange, String response, int code) throws IOException {

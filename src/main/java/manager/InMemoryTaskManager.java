@@ -294,20 +294,6 @@ public class InMemoryTaskManager implements TaskManager {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public Optional<Task> getTaskByIdOptional(int id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<Epic> getEpicByIdOptional(int id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<Subtask> getSubtaskByIdOptional(int id) {
-        return Optional.empty();
-    }
 
     @Override
     public void validateTaskTime(Task task) throws IllegalArgumentException {

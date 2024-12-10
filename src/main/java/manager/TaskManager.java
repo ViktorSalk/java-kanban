@@ -53,14 +53,7 @@ public interface TaskManager {
 
     void clearSubtasks();
 
-
     List<Task> getPrioritizedTasks();
-
-    Optional<Task> getTaskByIdOptional(int id);
-
-    Optional<Epic> getEpicByIdOptional(int id);
-
-    Optional<Subtask> getSubtaskByIdOptional(int id);
 
     void validateTaskTime(Task task) throws IllegalArgumentException;
 }

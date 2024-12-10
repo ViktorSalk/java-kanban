@@ -2,12 +2,13 @@ package task;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import manager.HttpTaskServer;
+import manager.KVServer;
 import manager.Managers;
 import manager.TaskManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import manager.HttpTaskServer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -23,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TaskEndpointTest {
     private static final String BASE_URL = "http://localhost:8080";
-    private HttpTaskServer server;
+    private HttpTaskServer taskServer;
+    private KVServer kvServer;
     private TaskManager manager;
     private HttpClient client;
 
@@ -62,15 +64,25 @@ class TaskEndpointTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        // Сначала запускаем KVServer
+        kvServer = new KVServer();
+        kvServer.start();
+
+        // Затем создаем менеджер, который будет использовать KVServer
         manager = Managers.getDefault();
-        server = new HttpTaskServer(manager);
+
+        // Создаем и запускаем HTTP-сервер задач
+        taskServer = new HttpTaskServer(manager);
+        taskServer.start();
+
         client = HttpClient.newHttpClient();
-        server.start();
     }
 
     @AfterEach
     void tearDown() {
-        server.stop();
+        // Останавливаем серверы в обратном порядке
+        taskServer.stop();
+        kvServer.stop();
     }
 
     @Test
@@ -96,20 +108,28 @@ class TaskEndpointTest {
                 .GET()
                 .build();
 
-        System.out.println("Отправка запроса...");
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("Получен ответ с кодом: " + response.statusCode()); // Логирование
-        System.out.println("Тело ответа: " + response.body()); // Логирование
 
         // Проверяем код ответа
         assertEquals(200, response.statusCode());
 
-        // Преобразуем ответ в список задач
-        List<Task> tasks = gson.fromJson(response.body(), new TypeToken<List<Task>>() {
-        }.getType());
+        // Проверяем содержимое ответа
+        Type listType = new TypeToken<List<Task>>() {
+        }.getType();
+        List<Task> tasks = gson.fromJson(response.body(), listType);
 
-        // Проверяем результат
+        assertNotNull(tasks);
         assertEquals(2, tasks.size());
+
+        // Проверяем, что задачи сохранились в KVServer
+        // Это можно сделать косвенно через получение задач по ID
+        Task savedTask1 = manager.getTaskById(task1.getId());
+        Task savedTask2 = manager.getTaskById(task2.getId());
+
+        assertNotNull(savedTask1);
+        assertNotNull(savedTask2);
+        assertEquals(task1.getName(), savedTask1.getName());
+        assertEquals(task2.getName(), savedTask2.getName());
     }
 
     @Test

@@ -3,6 +3,7 @@ package history;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import http.HttpStatusCode;
 import manager.TaskManager;
 import manager.HttpTaskServer;
 import task.Task;
@@ -22,41 +23,44 @@ public class HistoryHandler implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        try {
-            String path = exchange.getRequestURI().getPath();
-            String method = exchange.getRequestMethod();
+    public void handle(HttpExchange httpExchange) throws IOException {
+        try (httpExchange) {
+            String path = httpExchange.getRequestURI().getPath();
+            String method = httpExchange.getRequestMethod();
 
             if (!"GET".equals(method)) {
-                sendResponse(exchange, "{\"error\": \"Method not allowed\"}", 405);
+                sendResponse(httpExchange,
+                        "{\"error\": \"Method not allowed\"}",
+                        HttpStatusCode.METHOD_NOT_ALLOWED);
                 return;
             }
 
             if (!"/tasks/history".equals(path)) {
-                sendResponse(exchange, "{\"error\": \"Invalid path\"}", 404);
+                sendResponse(httpExchange,
+                        "{\"error\": \"Invalid path\"}",
+                        HttpStatusCode.NOT_FOUND);
                 return;
             }
 
             List<Task> history = taskManager.getHistory();
-            sendResponse(exchange, gson.toJson(history), 200); // 200 для GET запроса
-        } catch (Exception e) {
-            System.out.println("Произошла ошибка: " + e.getMessage());
-            e.printStackTrace();
-            sendResponse(exchange, "{\"error\": \"" + e.getMessage() + "\"}", 500);
+            sendResponse(httpExchange, gson.toJson(history), HttpStatusCode.OK);
+
+        } catch (Exception exception) {
+            System.out.println("Произошла ошибка при получении истории: " + exception.getMessage());
+            sendResponse(httpExchange,
+                    "{\"error\": \"" + exception.getMessage() + "\"}",
+                    HttpStatusCode.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private void handleGetHistory(HttpExchange exchange) throws IOException {
-        List<Task> history = taskManager.getHistory();
-        sendResponse(exchange, gson.toJson(history), 200);
-    }
+    private void sendResponse(HttpExchange httpExchange, String response, HttpStatusCode statusCode)
+            throws IOException {
+        httpExchange.getResponseHeaders().set("Content-Type", "application/json");
+        byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
+        httpExchange.sendResponseHeaders(statusCode.getCode(), responseBytes.length);
 
-    private void sendResponse(HttpExchange exchange, String response, int code) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        exchange.sendResponseHeaders(code, bytes.length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
+        try (OutputStream outputStream = httpExchange.getResponseBody()) {
+            outputStream.write(responseBytes);
         }
     }
 }
