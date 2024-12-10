@@ -12,6 +12,13 @@ public class Epic extends Task {
         super(name, description);
     }
 
+    public void setSubtasks(List<Subtask> subtasks) {
+        this.subtasks.clear();
+        if (subtasks != null) {
+            this.subtasks.addAll(subtasks);
+        }
+    }
+
     public void addSubtask(Subtask subtask) {
         subtasks.add(subtask);
         updateEpicDetails(); // Продолжительность обновления и время начала при добавлении подзадачи

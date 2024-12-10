@@ -4,8 +4,7 @@ import task.Epic;
 import task.Subtask;
 import task.Task;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public interface TaskManager {
     Task addTask(Task task);
@@ -38,7 +37,13 @@ public interface TaskManager {
 
     List<Subtask> getAllSubtasks();
 
-    List<Subtask> getSubtasksByEpicId(int epicId);
+    public default List<Subtask> getSubtasksByEpicId(int epicId) {
+        Epic epic = getEpicById(epicId);
+        if (epic == null) {
+            return Collections.emptyList(); // Возвращаем пустой список, если эпик не найден
+        }
+        return new ArrayList<>(epic.getSubtasks());
+    }
 
     List<Task> getHistory();
 
@@ -48,9 +53,7 @@ public interface TaskManager {
 
     void clearSubtasks();
 
-    Optional<Task> getTaskByIdOptional(int id);
+    List<Task> getPrioritizedTasks();
 
-    Optional<Epic> getEpicByIdOptional(int id);
-
-    Optional<Subtask> getSubtaskByIdOptional(int id);
+    void validateTaskTime(Task task) throws IllegalArgumentException;
 }
